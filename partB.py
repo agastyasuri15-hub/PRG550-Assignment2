@@ -1,4 +1,6 @@
 import sys
+import a2
+
 
 def ascii_to_unicode(line_above, line, line_below):
     """Convert one ASCII maze line to a Unicode maze line."""
@@ -10,7 +12,6 @@ def ascii_to_unicode(line_above, line, line_below):
             left = (i > 0 and line[i - 1] in ('-', '+'))
             right = (i < len(line) - 1 and line[i + 1] in ('-', '+'))
 
-            # Use proper Unicode box-drawing characters
             if up and down and left and right:
                 result += '┼'
             elif up and down and left:
@@ -48,18 +49,40 @@ def ascii_to_unicode(line_above, line, line_below):
     return result
 
 
+def generate_labels(length):
+    """Generate 0–9 then A–Z labels up to maze width."""
+    labels = []
+    for i in range(length):
+        if i < 10:
+            labels.append(str(i))
+        else:
+            labels.append(chr(ord('A') + i - 10))
+    return " ".join(labels)
+
+
 def main():
-    if len(sys.argv) != 2:
-        print("Usage: python3 partB.py <maze_file>")
-        sys.exit(1)
-
-    filename = sys.argv[1]
-
-    try:
-        with open(filename, 'r') as f:
-            ascii_lines = f.readlines()
-    except FileNotFoundError:
-        print(f"Error: Cannot open file '{filename}'")
+    if len(sys.argv) == 2:
+        filename = sys.argv[1]
+        try:
+            with open(filename, 'r') as f:
+                ascii_lines = f.readlines()
+        except FileNotFoundError:
+            print(f"Error: Cannot open file '{filename}'")
+            sys.exit(1)
+    elif len(sys.argv) == 3:
+        try:
+            height = int(sys.argv[1])
+            width = int(sys.argv[2])
+        except ValueError:
+            print("Error: Height and width must be integers.")
+            sys.exit(1)
+        ascii_maze = a2.create_maze(height, width)
+        ascii_lines = ascii_maze.splitlines()
+    else:
+        print("Usage:")
+        print("  python3 partB.py <maze_file>")
+        print("  OR")
+        print("  python3 partB.py <height> <width>")
         sys.exit(1)
 
     ascii_lines = [line.rstrip('\n') for line in ascii_lines]
@@ -70,9 +93,16 @@ def main():
         line_below = ascii_lines[i + 1] if i < len(ascii_lines) - 1 else ""
         unicode_lines.append(ascii_to_unicode(line_above, line, line_below))
 
+    top_label = "   " + generate_labels(len(ascii_lines[0]))
     print("ASCII Maze:".ljust(40) + "Unicode Maze:")
-    for a, u in zip(ascii_lines, unicode_lines):
-        print(a.ljust(40) + "    " + u)
+    print(top_label.ljust(40) + "   " + top_label)
+
+    for row_num, (a, u) in enumerate(zip(ascii_lines, unicode_lines)):
+        if row_num < 10:
+            label = f" {row_num} "
+        else:
+            label = f" {chr(ord('A') + row_num - 10)} "
+        print(f"{label}{a}".ljust(40) + "   " + f"{label}{u}")
 
 
 if __name__ == "__main__":
